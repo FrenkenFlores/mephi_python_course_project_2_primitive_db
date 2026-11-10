@@ -9,5 +9,11 @@ uv tool install dist/*.whl
 Запуск
 ```
 project
-# DB project is running!
+#
+# Первая попытка запустить проект!
+#
+# ***
+# <command> exit - выйти из программы
+# <command> help - справочная информация
+# Введите команду:
 ```
