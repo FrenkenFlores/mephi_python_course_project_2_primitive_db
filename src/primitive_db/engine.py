@@ -1,3 +1,5 @@
+import argparse
+import dataclasses
 import re
 
 import prompt
@@ -56,8 +58,27 @@ RE_INFO = re.compile(
 )
 
 
+@dataclasses.dataclass
+class CliArgs:
+    init: bool
+
+
+def parse_cli() -> CliArgs:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-i', '--init',
+        action='store_true',
+        default=False,
+        help='Initialize the database metadata'
+    )
+    return CliArgs(
+        init=parser.parse_args().init
+    )
+
+
 def run():
-    metadata = load_metadata(DATABASE_FILE)
+    args = parse_cli()
+    metadata = load_metadata(DATABASE_FILE, init=args.init)
     while True:
         command = prompt.string(">>>Введите команду: ")
         match command:
@@ -69,44 +90,28 @@ def run():
                 data = m.groupdict()
                 table_name = data['table_name']
                 args = data['columns'].split()
-                try:
-                    create_table(metadata, table_name, args)
-
-                except ValueError as e:
-                    print(e)
+                create_table(metadata, table_name, args)
             case _ if m := RE_DROP_TABLE.match(command):
                 data = m.groupdict()
                 table_name = data['table_name']
-                try:
-                    drop_table(metadata, table_name)
-                except ValueError as e:
-                    print(e)
+                drop_table(metadata, table_name)
             case _ if m := RE_LIST_TABLES.match(command):
                 list_table(metadata)
             case _ if m := RE_INSERT.match(command):
                 data = m.groupdict()
                 table_name = data['table_name']
                 args = [datom.strip('"\'') for datom in data['values'].split(", ")]
-                try:
-                    insert(metadata, table_name, args)
-                except (TypeError, ValueError) as e:
-                    print(e)
+                insert(metadata, table_name, args)
             case _ if m := RE_SELECT_WHERE.match(command):
                 data = m.groupdict()
                 table_name = data['table_name']
                 column = data['column']
                 value = data['value']
-                try:
-                    select(metadata, table_name, where_clause=(column, value))
-                except ValueError as e:
-                    print(e)
+                select(metadata, table_name, where_clause=(column, value))
             case _ if m := RE_SELECT_ALL.match(command):
                 data = m.groupdict()
                 table_name = data['table_name']
-                try:
-                    select(metadata, table_name)
-                except ValueError as e:
-                    print(e)
+                select(metadata, table_name)
             case _ if m := RE_UPDATE.match(command):
                 data = m.groupdict()
                 table_name = data['table_name']
@@ -114,24 +119,18 @@ def run():
                 new_value = data['new_value']
                 where_col = data['where_col']
                 where_val = data['where_val']
-                try:
-                    update(
-                        metadata,
-                        table_name,
-                        set_clause=(column, new_value),
-                        where_clause=(where_col, where_val)
-                    )
-                except ValueError as e:
-                    print(e)
+                update(
+                    metadata,
+                    table_name,
+                    set_clause=(column, new_value),
+                    where_clause=(where_col, where_val)
+                )
             case _ if m := RE_DELETE.match(command):
                 data = m.groupdict()
                 table_name = data['table_name']
                 column = data['column']
                 value = data['value']
-                try:
-                    delete(metadata, table_name, where_clause=(column, value))
-                except ValueError as e:
-                    print(e)
+                delete(metadata, table_name, where_clause=(column, value))
             case _ if m := RE_INFO.match(command):
                 data = m.groupdict()
                 table_name = data['table_name']

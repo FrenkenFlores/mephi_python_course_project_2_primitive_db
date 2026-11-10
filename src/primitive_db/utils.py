@@ -4,6 +4,8 @@ import pydoc
 import sys
 from typing import Callable
 
+from primitive_db.decorators import handle_db_errors
+
 TEMPLATE = """
 ***Общие команды***
 
@@ -34,12 +36,15 @@ where <столбец_условия> = <значение_условия> - об
 """
 DATA_DIR = "data"
 
-def load_metadata(filepath: str) -> dict:
+
+@handle_db_errors
+def load_metadata(filepath: str, init: bool = False) -> dict:
     """
     Takes filepath and loads metadata.
 
     Args:
         filepath (str): the path to the JSON file
+        init (bool, optional): if True, the metadata file will be created
     Returns:
         dict: metadata dictionary that was loaded from filepath
     Raises:
@@ -58,23 +63,24 @@ def load_metadata(filepath: str) -> dict:
         )
     data = {}
     try:
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, "r" if not init else "w+", encoding="utf-8") as f:
             data.update(
                 json.load(f)
             )
     except FileNotFoundError as e:
-        print(
-            f'Ошибка: Файл "{filepath}" не найден. Исключение: "{e}". '
-            f'Новый файл будт создан'
+        raise FileNotFoundError(
+            f'Ошибка: Файл "{filepath}" не найден. '
+            f'Исключение: "{e}". Используйте флаг --init'
         )
     except (json.decoder.JSONDecodeError, TypeError) as e:
-        print(
+        raise ValueError(
             f'Ошибка: У файла "{filepath} неправильный JSON формат или не представляет '
-            f'собой словарь. Исключение: "{e}". Файл будет создан заново'
+            f'собой словарь. Исключение: "{e}". Провертье, что в JSON задан словарь'
         )
     return data
 
 
+@handle_db_errors
 def save_metadata(filepath: str, data: dict):
     """
     Takes filepath and saves metadata.
@@ -99,8 +105,8 @@ def save_metadata(filepath: str, data: dict):
         )
     if not isinstance(data, dict):
         raise TypeError(
-            f'Ошибка: Неподходящий тип "{type(data)}" у аргумента "data". '
-            f'Тип должен быть dict'
+            f'Ошибка: Неподходящий тип "{type(data)}" у '
+            f'аргумента "data". Тип должен быть dict'
         )
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
@@ -120,6 +126,7 @@ def exit():
     sys.exit(0)
 
 
+@handle_db_errors
 def load_table_data(table_name: str):
     """
     Loads table data from JSON file.
@@ -141,16 +148,16 @@ def load_table_data(table_name: str):
         )
     ):
         raise ValueError(
-            "Ошибка: Путь должен представлять собой строку, "
-            "которая указывает на JSON файл"
+            "Ошибка: Путь должен представлять собой "
+            "строку, которая указывает на JSON файл"
         )
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             data.update(json.load(f))
     except FileNotFoundError as e:
         print(
-            f'Ошибка: Файл "{filepath}" не найден. Исключение: "{e}". '
-            f'Новый файл будт создан'
+            f'Ошибка: Файл "{filepath}" не найден. '
+            f'Исключение: "{e}". Новый файл будт создан'
         )
     except (json.decoder.JSONDecodeError, TypeError) as e:
         print(
@@ -160,6 +167,7 @@ def load_table_data(table_name: str):
     return data
 
 
+@handle_db_errors
 def save_table_data(table_name, data):
     """
     Saves data into table JSON file.
@@ -185,8 +193,8 @@ def save_table_data(table_name, data):
         )
     if not isinstance(data, dict):
         raise TypeError(
-            f'Ошибка: Неподходящий тип "{type(data)}" у аргумента "data". '
-            f'Тип должен быть dict'
+            f'Ошибка: Неподходящий тип "{type(data)}" у '
+            f'аргумента "data". Тип должен быть dict'
         )
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)

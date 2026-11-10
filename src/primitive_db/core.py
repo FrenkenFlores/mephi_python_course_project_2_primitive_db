@@ -1,7 +1,14 @@
 from types import NoneType
+from typing import Any, Callable
 
 from prettytable import PrettyTable
 
+from primitive_db.decorators import (
+    confirm_action,
+    create_cacher,
+    handle_db_errors,
+    log_time,
+)
 from primitive_db.utils import (
     load_table_data,
     save_metadata,
@@ -10,8 +17,10 @@ from primitive_db.utils import (
 )
 
 DATABASE_FILE = "db_meta.json"
+cache_result: Callable[[Any, Callable], Any] = create_cacher()
 
 
+@handle_db_errors
 def create_table(metadata: dict, table_name: str, columns: list) -> dict:
     """
     Create a table and save the scheme in the metadata dictionary inplace.
@@ -55,6 +64,8 @@ def create_table(metadata: dict, table_name: str, columns: list) -> dict:
     return metadata
 
 
+@handle_db_errors
+@confirm_action("удаление таблицы")
 def drop_table(metadata: dict, table_name: str) -> dict:
     """
     Remove table schema from the metadata dictionary inplace.
@@ -80,6 +91,8 @@ def list_table(metadata):
         print(f"- {table}")
 
 
+@log_time
+@handle_db_errors
 def insert(
     metadata,
     table_name,
@@ -116,8 +129,8 @@ def insert(
             )
         except ValueError:
             raise TypeError(
-                f'Ошибка: неправильный тип данных "{type(value)}" '
-                f'для "{schema_value}". '
+                f'Ошибка: неправильный тип данных '
+                f'"{type(value)}" для "{schema_value}". '
                 f'Ожидается "{metadata[table_name][schema_value]}"'
             )
     if len(typed_values) != len(values):
@@ -143,6 +156,8 @@ def insert(
     print(f'Запись с ID={cur_index} успешно добавлена в таблицу "{table_name}"')
 
 
+@log_time
+@handle_db_errors
 def select(
     metadata,
     table_data,
@@ -152,7 +167,7 @@ def select(
         raise ValueError(f'Ошибка: Таблица "{table_data}" не существует.')
     table = PrettyTable()
     table.field_names = list(metadata[table_data].keys())
-    data = load_table_data(table_data)
+    data = cache_result(table_data, lambda: load_table_data(table_data))
     if not data:
         return table
     flattened_data = []
@@ -196,6 +211,7 @@ def select(
     print(table)
 
 
+@handle_db_errors
 def update(metadata, table_data, set_clause, where_clause):
     if table_data not in metadata:
         raise ValueError(f'Ошибка: Таблица "{table_data}" не существует.')
@@ -239,6 +255,8 @@ def update(metadata, table_data, set_clause, where_clause):
     save_table_data(table_data, data)
 
 
+@handle_db_errors
+@confirm_action("удаление записи")
 def delete(metadata, table_data, where_clause):
     if table_data not in metadata:
         raise ValueError(f'Ошибка: Таблица "{table_data}" не существует.')
@@ -256,9 +274,7 @@ def delete(metadata, table_data, where_clause):
             )
     if filter_col == "ID":
         del data[filter_val]
-        print(
-            f'Запись с ID={filter_val} успешно удалена из таблицы "{table_data}"'
-        )
+        print(f'Запись с ID={filter_val} успешно удалена из таблицы "{table_data}"')
     else:
         for idx, o in data.copy().items():
             try:
@@ -274,6 +290,8 @@ def delete(metadata, table_data, where_clause):
                 )
     save_table_data(table_data, data)
 
+
+@handle_db_errors
 def info(metadata, table_data):
     if table_data not in metadata:
         raise ValueError(f'Ошибка: Таблица "{table_data}" не существует.')
