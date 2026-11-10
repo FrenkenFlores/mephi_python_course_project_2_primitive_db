@@ -87,6 +87,12 @@ def drop_table(metadata: dict, table_name: str) -> dict:
 
 
 def list_table(metadata):
+    """
+    Print the list of all tables in database.
+
+    Args:
+        metadata (dict): the table schemas
+    """
     for table in metadata:
         print(f"- {table}")
 
@@ -94,9 +100,9 @@ def list_table(metadata):
 @log_time
 @handle_db_errors
 def insert(
-    metadata,
-    table_name,
-    values
+    metadata: dict,
+    table_name: str,
+    values: list
 ):
     """
     Insert values into the table schemas.
@@ -159,10 +165,22 @@ def insert(
 @log_time
 @handle_db_errors
 def select(
-    metadata,
-    table_data,
+    metadata: dict,
+    table_data: str,
     where_clause: tuple | NoneType = None
 ):
+    """
+    Prints rows of the given table. If where_clauses is
+    provided, then the values will be filtered.
+
+    Args:
+        metadata (dict): the table schemas
+        table_data (str): the table name
+        where_clause (tuple | NoneType): a tuple with column name
+        and value that will be selected
+    Raises:
+        ValueError: invalid input data
+    """
     if table_data not in metadata:
         raise ValueError(f'Ошибка: Таблица "{table_data}" не существует.')
     table = PrettyTable()
@@ -213,6 +231,17 @@ def select(
 
 @handle_db_errors
 def update(metadata, table_data, set_clause, where_clause):
+    """
+    Updates the given table value that is located by column and value.
+
+    Args:
+        metadata (dict): the table schemas
+        table_data (str): the table name
+        set_clause (tuple): a tuple with column name and its new value
+        where_clause (tuple): a tuple with column name and value that will be selected
+    Raises:
+        ValueError: invalid input data
+    """
     if table_data not in metadata:
         raise ValueError(f'Ошибка: Таблица "{table_data}" не существует.')
     data = load_table_data(table_data)
@@ -258,6 +287,16 @@ def update(metadata, table_data, set_clause, where_clause):
 @handle_db_errors
 @confirm_action("удаление записи")
 def delete(metadata, table_data, where_clause):
+    """
+    Deletes the row selected by the given expression.
+
+    Args:
+        metadata (dict): the table schemas
+        table_data (str): the table name
+        where_clause (tuple): a tuple with column name and value that will be deleted
+    Raises:
+        ValueError: invalid input data
+    """
     if table_data not in metadata:
         raise ValueError(f'Ошибка: Таблица "{table_data}" не существует.')
     data = load_table_data(table_data)
@@ -293,6 +332,15 @@ def delete(metadata, table_data, where_clause):
 
 @handle_db_errors
 def info(metadata, table_data):
+    """
+    Prints table metadata.
+
+    Args:
+        metadata (dict): the table schemas
+        table_data (str): the table name
+    Raises:
+        ValueError: invalid input data
+    """
     if table_data not in metadata:
         raise ValueError(f'Ошибка: Таблица "{table_data}" не существует.')
     data = load_table_data(table_data)

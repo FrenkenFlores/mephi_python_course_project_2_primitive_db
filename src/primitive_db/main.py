@@ -3,7 +3,9 @@ from primitive_db import engine
 
 
 def main():
-    # engine.welcome()
+    """
+    Main entry point.
+    """
     engine.run()
 
 if __name__ == '__main__':

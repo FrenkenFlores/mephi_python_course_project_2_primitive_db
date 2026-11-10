@@ -5,6 +5,9 @@ import prompt
 
 
 def handle_db_errors(func):
+    """
+    A decorator that handles database errors.
+    """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -21,6 +24,9 @@ def handle_db_errors(func):
 
 
 def confirm_action(action_name):
+    """
+    A decorator that will enforce to give agreement before execution.
+    """
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -32,7 +38,11 @@ def confirm_action(action_name):
         return wrapper
     return decorator
 
+
 def log_time(func):
+    """
+    A decorator that log the time of execution.
+    """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.monotonic()
@@ -47,6 +57,9 @@ def log_time(func):
 
 
 def create_cacher():
+    """
+    A cache function fabric that holds data in memory.
+    """
     cache = {}
     def cache_result(key, value_func):
         if key not in cache:
