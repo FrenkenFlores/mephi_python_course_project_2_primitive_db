@@ -60,10 +60,19 @@ RE_INFO = re.compile(
 
 @dataclasses.dataclass
 class CliArgs:
+    """
+    A class used to capture CLI args.
+    """
     init: bool
 
 
 def parse_cli() -> CliArgs:
+    """
+    parse user CLI args.
+
+    Returns:
+        CLIArgs: an object with cli args
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-i', '--init',
@@ -77,6 +86,9 @@ def parse_cli() -> CliArgs:
 
 
 def run():
+    """
+    An infinite loop which runs until user exits.
+    """
     args = parse_cli()
     metadata = load_metadata(DATABASE_FILE, init=args.init)
     while True:
